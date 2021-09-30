@@ -68,8 +68,15 @@ func TestToyDB_Get2(t *testing.T) {
 }
 
 func TestToyDB_Del(t *testing.T) {
-	var e []byte
-	fmt.Println(len(e))
+	db, err := Open("D:/toydb")
+	if err != nil {
+		log.Fatalln("Error to open toydb")
+	}
+	var key = fmt.Sprintf("storemelf_userid_%d", 1111112334)
+	err = db.Del([]byte(key))
+	if err != nil {
+		log.Fatalln("Del error")
+	}
 }
 
 func TestToyDB_Get(t *testing.T) {
