@@ -75,9 +75,9 @@ func (db *ToyDB) reloadIndexes() error {
 			}
 		}
 
-		db.indexes[string(item.Key)]=indexData{Offset: offset}
+		db.indexes[string(item.Key)] = indexData{Offset: offset}
 
-		if item.Flag==DEL {
+		if item.Flag == DEL {
 			delete(db.indexes, string(item.Key))
 		}
 
@@ -183,4 +183,6 @@ func (db *ToyDB) Vacuum() error {
 func (db *ToyDB) Close() {
 	_ = db.Vacuum()
 	_ = db.dataFile.File.Close()
+	// make gc collectors work here.
+	db.indexes = make(map[string]indexData)
 }
