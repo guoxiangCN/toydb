@@ -149,8 +149,8 @@ func (db *ToyDB) Del(key []byte) error {
 }
 
 func (db *ToyDB) Size() int64 {
-	db.lock.Lock()
-	defer db.lock.Unlock()
+	db.lock.RLock()
+	defer db.lock.RUnlock()
 	return int64(len(db.indexes))
 }
 
