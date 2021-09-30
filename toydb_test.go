@@ -12,9 +12,9 @@ func TestOpen(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error to open toydb")
 	}
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 10000000; i++ {
 		var key = fmt.Sprintf("storemelf_userid_%d", i)
-		var val = fmt.Sprintf("uid_anchorid____%d", i)
+		var val = fmt.Sprintf("newvalue_______%d", i)
 		err := db.Put([]byte(key), []byte(val))
 		if err != nil {
 			fmt.Println("put error")
@@ -59,6 +59,11 @@ func TestToyDB_Get2(t *testing.T) {
 	value, err := db.Get([]byte("test_index_data"))
 	if err == nil {
 		fmt.Println(string(value))
+	}
+
+	db.Close()
+	for {
+		time.Sleep(1*time.Second)
 	}
 }
 

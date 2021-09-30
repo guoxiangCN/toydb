@@ -3,6 +3,7 @@ package toydb
 import (
 	"errors"
 	"io"
+	"log"
 	"os"
 	"sync"
 )
@@ -47,7 +48,9 @@ func Open(dirPath string) (*ToyDB, error) {
 		isVacuum: false,
 	}
 
+	log.Print("toydb start to reload indexes")
 	err = db.reloadIndexes()
+	log.Print("toydb finish reload indexes")
 	if err != nil {
 		return nil, err
 	}
