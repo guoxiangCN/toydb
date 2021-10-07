@@ -13,8 +13,8 @@ func TestOpen(t *testing.T) {
 		log.Fatalln("Error to open toydb")
 	}
 	for i := 0; i < 10000000; i++ {
-		var key = fmt.Sprintf("storemelf_userid_%d", i)
-		var val = fmt.Sprintf("newvalue_______%d", i)
+		var key = fmt.Sprintf("testkey%d", i)
+		var val = fmt.Sprintf("redisvalue%d", i)
 		err := db.Put([]byte(key), []byte(val))
 		if err != nil {
 			fmt.Println("put error")
@@ -27,7 +27,7 @@ func TestOpen(t *testing.T) {
 	for i := 0; i < 1000000; i++ {
 		var key = fmt.Sprintf("storemelf_userid_%d", i)
 		value, err := db.Get([]byte(key))
-		if err!=nil {
+		if err != nil {
 			log.Fatalln("Get error")
 		}
 		fmt.Printf("key: %s, value: %s\n", key, string(value))
@@ -63,7 +63,7 @@ func TestToyDB_Get2(t *testing.T) {
 
 	db.Close()
 	for {
-		time.Sleep(1*time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -72,10 +72,12 @@ func TestToyDB_Del(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error to open toydb")
 	}
-	var key = fmt.Sprintf("storemelf_userid_%d", 1111112334)
-	err = db.Del([]byte(key))
-	if err != nil {
-		log.Fatalln("Del error")
+	for i := 0; i < 10000000; i++ {
+		var key = fmt.Sprintf("testkey%d", i)
+		err := db.Del([]byte(key))
+		if err != nil {
+			t.Fatal("delete failed", err)
+		}
 	}
 }
 
@@ -89,10 +91,10 @@ func TestToyDB_Get(t *testing.T) {
 	if err != nil {
 		log.Fatalln("Error to open toydb")
 	}
-	for i := 0; i < 1000000; i++ {
-		var key = fmt.Sprintf("storemelf_userid_%d", i)
+	for i := 0; i < 100; i++ {
+		var key = fmt.Sprintf("testkey%d", i)
 		value, err := db.Get([]byte(key))
-		if err!=nil {
+		if err != nil {
 			log.Fatalln("Get error")
 		}
 		fmt.Printf("key: %s, value: %s\n", key, value)
@@ -100,5 +102,38 @@ func TestToyDB_Get(t *testing.T) {
 }
 
 func TestToyDB_Vacuum(t *testing.T) {
+	db, err := Open("D:/toydb_testvacuum")
+	if err != nil {
+		log.Fatalln("Open DB failed...")
+	}
 
+	if err!= nil {
+		log.Fatal("Vacuum DB failed...",err)
+	}
+
+	for i := 0; i < 10000; i++ {
+		var key = fmt.Sprintf("testkey%d", i)
+		var val = fmt.Sprintf("redisvalue%d", i)
+		err := db.Put([]byte(key), []byte(val))
+		if err != nil {
+			fmt.Println("put error")
+		}
+	}
+
+	for i := 0; i < 9999; i++ {
+		var key = fmt.Sprintf("testkey%d", i)
+		err := db.Del([]byte(key))
+		if err != nil {
+			log.Fatalln("Get error")
+		}
+	}
+
+	err = db.Vacuum()
+	if err != nil {
+		t.Fatal("Vacuum failed...")
+	}
+	// put 10000  del 10000
+	// 理论上vacuum后为空
+	get, err := db.Get([]byte("testkey9999"))
+	fmt.Println(string(get))
 }

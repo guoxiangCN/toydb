@@ -133,6 +133,7 @@ func (db *ToyDB) Del(key []byte) error {
 	if len(key) == 0 {
 		return ErrKeyEmptyNotAllowed
 	}
+
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -164,24 +165,65 @@ func (db *ToyDB) Vacuum() error {
 		return ErrVacuumAlreadyInProgress
 	}
 
+	// 由于toydb只有1个DATA文件,因此必须加写锁
 	db.lock.RUnlock()
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
-	// start vacuum processing TODO
+	mergeFile, err := newDBMergeFile(db.dirPath)
+	if err != nil {
+		return err
+	}
 
+	mergeFileName := mergeFile.File.Name()
+	defer os.Remove(mergeFileName)
+
+	// 直接使用内存哈希表的索引数据重建
+	newIndexes := make(map[string]indexData)
+
+	for key := range db.indexes {
+		index := db.indexes[key]
+		item, err := db.dataFile.ReadItem(index.Offset)
+		if err != nil {
+			return err
+		}
+
+		// 写入merge文件
+		offset := mergeFile.Offset
+		err = mergeFile.Write(item)
+		if err != nil {
+			return err
+		}
+
+		// 新的offset放到新索引位置
+		newIndexes[key] = indexData{Offset: offset}
+	}
+
+	// 删除旧数据文件
+	dbFileName := db.dataFile.File.Name()
+	_ = db.dataFile.File.Close()
+	_ = os.Remove(dbFileName)
+
+	err = mergeFile.File.Close()
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(mergeFileName, dbFileName)
+	if err != nil {
+		return err
+	}
+
+	// 索引替换
+	db.indexes = newIndexes
+	// 重新打开文件
+	dataFileV2, err := newDBDataFile(db.dirPath)
+	if err != nil {
+		return err
+	}
+	db.dataFile = dataFileV2
 	return nil
 }
-
-//func (db *ToyDB) StartBgVacuum(ctx context.Context) {
-//	go func() {
-//		time.Sleep(60 * time.Second)
-//		err := db.Vacuum()
-//		if err != nil {
-//			panic(err)
-//		}
-//	}()
-//}
 
 func (db *ToyDB) Close() {
 	_ = db.Vacuum()
