@@ -214,14 +214,15 @@ func (db *ToyDB) Vacuum() error {
 		return err
 	}
 
-	// 索引替换
-	db.indexes = newIndexes
 	// 重新打开文件
 	dataFileV2, err := newDBDataFile(db.dirPath)
 	if err != nil {
 		return err
 	}
 	db.dataFile = dataFileV2
+
+	// 索引替换
+	db.indexes = newIndexes
 	return nil
 }
 
