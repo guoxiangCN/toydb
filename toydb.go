@@ -159,16 +159,16 @@ func (db *ToyDB) Size() int64 {
 }
 
 func (db *ToyDB) Vacuum() error {
-	db.lock.RLock()
+	db.lock.Lock()
+	defer db.lock.Unlock()
 	if db.isVacuum {
-		db.lock.RUnlock()
 		return ErrVacuumAlreadyInProgress
 	}
 
-	// 由于toydb只有1个DATA文件,因此必须加写锁
-	db.lock.RUnlock()
-	db.lock.Lock()
-	defer db.lock.Unlock()
+	db.isVacuum = true
+	defer func() {
+		db.isVacuum = false
+	}()
 
 	mergeFile, err := newDBMergeFile(db.dirPath)
 	if err != nil {
